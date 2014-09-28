@@ -2,9 +2,10 @@
 # @Author: lnxg33k
 # @Date:   2014-09-28 02:05:41
 # @Last Modified by:   lnxg33k
-# @Last Modified time: 2014-09-29 01:42:45
+# @Last Modified time: 2014-09-29 01:57:08
 
 # POC for CVE-2014-6271 shellshock
+# Thanks for Dan-Haim for the Python SOCKS module
 
 import socket
 from urllib2 import (ProxyHandler, build_opener,
