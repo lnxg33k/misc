@@ -2,7 +2,7 @@
 # @Author: lnxg33k
 # @Date:   2014-10-08 03:47:26
 # @Last Modified by:   lnxg33k
-# @Last Modified time: 2014-10-12 17:35:21
+# @Last Modified time: 2014-10-12 20:35:28
 
 """
 In order to interact with the Safe Browsing lookup server,
@@ -16,7 +16,7 @@ You will pass this key as a CGI parameter
 5. Click on Create new key and create a browser or server key.
 """
 
-from requests import request
+from urllib2 import Request, urlopen
 from sys import argv
 from json import dumps
 
@@ -37,14 +37,14 @@ def lookUp(domains=[]):
     result = {}
     chunked_domains = chunks(domains)
     for chunk in chunked_domains:
+        data = "%s\n%s" % (len(chunk), "\n".join(chunk))
         try:
-            r = request(
-                'POST',
-                url, data="%s\n%s" % (len(chunk), "\n".join(chunk))
-            )
-            if r.status_code == 200:
+            req = Request(url, data)
+            r = urlopen(req)
+            if r.code == 200:
                 result.update(dict(zip(
-                    chunk, map(lambda n: {'google': n}, r.content.splitlines()))
+                    chunk,
+                    map(lambda n: {'google': n}, map(str.strip, r.readlines())))
                 ))
         except:
             pass
