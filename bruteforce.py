@@ -49,7 +49,7 @@ def fileExists(url, foundCodes=[], cookies=None):
 with open('/Users/lnxg33k/pentest/web/dirb/wordlists/common.txt') as f:
     paths = filter(None, map(str.strip, f.readlines()))
 
-urls = getFullUrls("http://eces.telekom.de/", paths, ext=['.php'])
+urls = getFullUrls("http://google.com/", paths, ext=['.php'])
 
 
 result = []
