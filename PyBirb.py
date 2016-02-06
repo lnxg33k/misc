@@ -66,7 +66,7 @@ def fileExists(url, notFound=404, ignoreCodes=[], cookies=None, sleep=0, agent=N
                 url, data['code'], data['Content-Type'],
                 data['Content-Length']))
             return data
-    except Exception, e:
+    except:
         # print e.message
         pass
     finally:
@@ -81,16 +81,32 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     args = parser.add_argument_group('Options')
-    args.add_argument('-u', '--url', dest='url', metavar='', help='\t\tThe target URL to scan.')
-    args.add_argument('-w', '--wordlist', dest='wordlist', metavar='', help='\t\tPath to the wordlist.')
-    args.add_argument('-e', '--extensions', dest='extensions', metavar='', help='\t\tAppend each word with theae extensions (e.g. asp,aspx).')
-    args.add_argument('-t', '--threads', dest='threads', type=int, default=30, metavar='', help='\t\tNumber of concurrent threads (default 30).')
+    args.add_argument(
+        '-u', '--url', dest='url', metavar='',
+        help='\t\tThe target URL to scan.')
+    args.add_argument(
+        '-w', '--wordlist', dest='wordlist', metavar='',
+        help='\t\tPath to the wordlist.')
+    args.add_argument(
+        '-e', '--extensions', dest='extensions', metavar='',
+        help='\t\tAppend each word with theae extensions (e.g. asp,aspx).')
+    args.add_argument(
+        '-t', '--threads', dest='threads', type=int, default=30,
+        metavar='', help='\t\tNumber of concurrent threads (default 30).')
 
-    connection = parser.add_argument_group('Connection')
-    connection.add_argument('-c', '--cookie', dest='cookie', metavar='', help='\t\tSet a cookie to the request.')
-    connection.add_argument('-ua', '--user-agent', dest='agent', metavar='', help='\t\tSpoof the request User-Agent.')
-    connection.add_argument('-s', '--sleep', dest='sleep', type=int, default=0, metavar='', help='\t\tTime to sleep between concurrent requests. (default 0)')
-    connection.add_argument('-i', '--ignore', dest='ignore', default=[], metavar='', help='\t\t HTTP response status codes to ignore (e.g. 300,500).')
+    connection = parser.add_argument_group('Request')
+    connection.add_argument(
+        '-c', '--cookie', dest='cookie', metavar='',
+        help='\t\tSet a cookie to the request.')
+    connection.add_argument(
+        '-ua', '--user-agent', dest='agent', metavar='',
+        help='\t\tSpoof the request User-Agent.')
+    connection.add_argument(
+        '-s', '--sleep', dest='sleep', type=int, default=0, metavar='',
+        help='\t\tTime to sleep between concurrent requests. (default 0)')
+    connection.add_argument(
+        '-i', '--ignore', dest='ignore', default=[], metavar='',
+        help='\t\t HTTP response status codes to ignore (e.g. 300,500).')
     options = parser.parse_args()
 
     url = options.url
@@ -102,12 +118,13 @@ if __name__ == '__main__':
     threads = options.threads
 
     urls = getFullUrls(url, paths, ext=extensions)
+    notFound = notFoundCode(
+        url=url, cookies=options.cookie, userAgent=options.agent)
 
     print "\n==================================================="
     print "[!] PyBirb [Dirb in Python with more features]."
     print "[!] By: Ahmed Shawky @lnxg33k."
     print "-------------"
-    notFound = notFoundCode(url=url, cookies=options.cookie, userAgent=options.agent)
     print "[-] NotFound Code : %d" % notFound
     print "[-] Ignore Codes  : %s" % options.ignore
     print "[-] Wordlist      : %s" % options.wordlist
@@ -120,7 +137,11 @@ if __name__ == '__main__':
     pool = ThreadPool(threads)
     pbar = ProgressBar(widgets=[SimpleProgress()], maxval=len(urls)).start()
     r = [pool.apply_async(
-            fileExists, (x, notFound, options.ignore, options.cookie, options.sleep, options.agent), callback=result.append
+            fileExists, (
+                x, notFound, options.ignore, options.cookie,
+                options.sleep, options.agent
+            ),
+            callback=result.append
             ) for x in urls]
     while len(result) != len(urls):
         pbar.update(len(result))
