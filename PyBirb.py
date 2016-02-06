@@ -17,9 +17,12 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 packages.urllib3.disable_warnings()
 
 
-def getFullUrls(url, paths, ext=[]):
+def getFullUrls(url, paths, prefixes=[], ext=[]):
     urls = []
     for path in paths:
+        if prefixes:
+            for prefix in prefixes:
+                path = "%s%s" % (prefix, path)
         if path:
             urls.append("%s/%s" % (url.rstrip('/'), path.strip('/')))
             if ext:
@@ -88,8 +91,11 @@ if __name__ == '__main__':
         '-w', '--wordlist', dest='wordlist', metavar='',
         help='\t\tPath to the wordlist.')
     args.add_argument(
-        '-e', '--extensions', dest='extensions', metavar='',
+        '-e', '--extensions', dest='extensions', metavar='', default=[],
         help='\t\tAppend each word with theae extensions (e.g. asp,aspx).')
+    args.add_argument(
+        '-p', '--prefix', dest='prefixes', metavar='', default=[],
+        help='\t\tPrefix to add before each element in the wordlist.')
     args.add_argument(
         '-t', '--threads', dest='threads', type=int, default=30,
         metavar='', help='\t\tNumber of concurrent threads (default 30).')
@@ -114,10 +120,15 @@ if __name__ == '__main__':
         options.ignore = map(int, options.ignore.split(','))
     with open(options.wordlist) as f:
         paths = list(set(filter(None, map(str.strip, f.readlines()))))
-    extensions = options.extensions.split(',')
+
+    if options.extensions:
+        options.extensions = options.extensions.split(',')
+    if options.prefixes:
+        options.prefixes = options.prefixes.split(',')
     threads = options.threads
 
-    urls = getFullUrls(url, paths, ext=extensions)
+    urls = getFullUrls(
+        url, paths, ext=options.extensions, prefixes=options.prefixes)
     notFound = notFoundCode(
         url=url, cookies=options.cookie, userAgent=options.agent)
 
@@ -128,7 +139,8 @@ if __name__ == '__main__':
     print "[-] NotFound Code : %d" % notFound
     print "[-] Ignore Codes  : %s" % options.ignore
     print "[-] Wordlist      : %s" % options.wordlist
-    print "[-] Extensions    : %s" % ', '.join(extensions)
+    print "[-] Extensions    : %s" % options.extensions
+    print "[-] Prefixes      : %s" % options.prefixes
     print "[-] Threads       : %d" % threads
     print "[-] Wait          : %d" % options.sleep
     print "====================================================\n"
