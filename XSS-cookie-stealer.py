@@ -23,6 +23,8 @@ class MyHandler(BaseHTTPRequestHandler):
             self.client_address[0],
             self.headers['user-agent'])
         print "-------------------"*6
+        print "Cookie Name\t\t\tValue"
+        print "-------------------"*6
         for k, v in query_components.items():
             print "%s\t\t\t%s" % (k.strip(), v)
 
