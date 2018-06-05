@@ -7,9 +7,19 @@
 disable_sys_funcs() {
 	printf "\nDisabling PHP Dangerous/Insecure Functions ...\n"
 
-	funcs_to_disable="apache_child_terminate, apache_setenv, define_syslog_variables, escapeshellarg, escapeshellcmd, eval, exec, fp, fput, ftp_connect, ftp_exec, ftp_get, ftp_login, ftp_nb_fput, ftp_put, ftp_raw, ftp_rawlist, highlight_file, ini_alter, ini_get_all, ini_restore, inject_code, mysql_pconnect, openlog, passthru, php_uname, phpAds_remoteInfo, phpAds_XmlRpc, phpAds_xmlrpcDecode, phpAds_xmlrpcEncode, popen, posix_getpwuid, posix_kill, posix_mkfifo, posix_setpgid, posix_setsid, posix_setuid, posix_setuid, posix_uname, proc_close, proc_get_status, proc_nice, proc_open, proc_terminate, shell_exec, syslog, system, xmlrpc_entity_decode, phpinfo"
+	funcs_to_disable="apache_child_terminate, apache_setenv, define_syslog_variables, escapeshellarg, escapeshellcmd, eval, exec, fp, fput, ftp_connect, ftp_exec, ftp_get, ftp_login, ftp_nb_fput, ftp_put, ftp_raw, ftp_rawlist, highlight_file, ini_alter, ini_get_all, ini_restore, inject_code, mysql_pconnect, openlog, passthru, php_uname, phpAds_remoteInfo, phpAds_XmlRpc, phpAds_xmlrpcDecode, phpAds_xmlrpcEncode, popen, posix_getpwuid, posix_kill, posix_mkfifo, posix_setpgid, posix_setsid, posix_setuid, posix_setuid, posix_uname, proc_close, proc_get_status, proc_nice, proc_open, proc_terminate, shell_exec, syslog, system, xmlrpc_entity_decode"
+
 	PHP_ini=$(find /etc/ -name php.ini 2>&1 | grep apache)
+
 	if [[ -f $PHP_ini ]]; then
+		PHP_ini_was_found=true;
+		PHP_ini="$PHP_ini, phpinfo"
+	else
+		PHP_ini=$(php -r "phpinfo();" | grep -oE "\s+/.*?php.ini" | sed -e 's/^[ \t]*//')
+		PHP_ini_was_found=true;
+	fi
+
+	if [ "$PHP_ini_was_found" = true ]; then
 		printf "php.ini path was found => $PHP_ini\n"
 		echo "; PHP security hardening by $(whoami) at $(date)" >>$PHP_ini
 		system_has_disabled_funcs=$(grep -i -E "^disable_functions\s*=\s*" $PHP_ini | awk -F'=' '{ print $2 }' | sed -e 's/^[ \t]*//')
@@ -26,6 +36,9 @@ disable_sys_funcs() {
 			echo "disable_functions=$(echo $funcs_to_disable)" >>$PHP_ini
 		fi
 		printf "Successfully disabled: $funcs_to_disable\n"
+		printf "\n--------------------------------------\n";
+		printf "|[x] Please, reload the webserver... |";
+		printf "\n--------------------------------------\n"
 	else
 		echo "Could not determine the php.ini file location, please report!"
 		exit 1
@@ -127,7 +140,7 @@ cd $drupal_path
 printf "Changing ownership of all contents of "${drupal_path}":\n user => "${drupal_user}" \t group => "${httpd_group}"\n"
 chown -R ${drupal_user}:${httpd_group} .
 
-printf "Changing permissions of all directories inside "${drupal_path}" to "rwxr-x---"...\n"
+printf "\nChanging permissions of all directories inside "${drupal_path}" to "rwxr-x---"...\n"
 find . -type d -exec chmod u=rwx,g=rx,o= '{}' \;
 
 printf "Changing permissions of all files inside "${drupal_path}" to "rw-r-----"...\n"
@@ -144,7 +157,7 @@ for x in ./*/files; do
 	find ${x} -type f -exec chmod ug=rw,o= '{}' \;
 done
 
-printf "Disabling the PHP engine entirely in ${drupal_path}/sites/default/files...\n"
+printf "\nDisabling the PHP engine entirely in ${drupal_path}/sites/default/files...\n"
 # incase we go shelled, overwrite the .htaccess
 # if [ ! -f ${drupal_path}/sites/default/files/.htaccess ]; then
 # printf ".htaccess files was not found in ${drupal_path}/sites/default/files/.htaccess !\n"
@@ -172,5 +185,3 @@ chmod u=,g=r,o= ${drupal_path}/sites/default/files/.htaccess
 echo "Done setting proper permissions on files and directories."
 
 disable_sys_funcs
-
-echo "[!] Please, reload the webserver..."
