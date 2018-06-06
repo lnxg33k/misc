@@ -1,7 +1,6 @@
 #!/bin/bash
-
-#./harden.sh --drupal_path=/var/www/drupal --drupal_user=user --httpd_group=apache
-#
+# Based on https://www.drupal.org/node/244924
+# Modified by Ahmed Shawky @lnxg33k
 
 # Disable PHP insecure functions
 disable_sys_funcs() {
