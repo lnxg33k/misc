@@ -122,14 +122,6 @@ if [ -z "${httpd_group}" ] || [[ "$(grep -oE "^${httpd_group}:" /etc/group 2>/de
 	exit 1
 fi
 
-if [ -z "${httpd_group}" ] || [[ "$(grep -oE "^${httpd_group}:" /etc/group 2>/dev/null)" != "${httpd_group}:" ]]; then
-	printf "****************************************\n"
-	printf "* Error: Please provide a valid group. *\n"
-	printf "****************************************\n"
-	print_help
-	exit 1
-fi
-
 if [ "${drupal_user}" == "${httpd_group}" ]; then
 	printf "********************************************************\n"
 	printf "* Error: The owner should be different than the group. *\n"
