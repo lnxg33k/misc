@@ -10,30 +10,33 @@ disable_sys_funcs() {
 
 	PHP_ini=$(find /etc/ -name php.ini 2>&1 | grep apache)
 
-	if [[ -f $PHP_ini ]]; then
+	if [[ $PHP_ini ]]; then
 		PHP_ini_was_found=true;
-		PHP_ini="$PHP_ini, phpinfo"
+		funcs_to_disable="$funcs_to_disable, phpinfo"
 	else
 		PHP_ini=$(php -r "phpinfo();" | grep -oE "\s+/.*?php.ini" | sed -e 's/^[ \t]*//')
 		PHP_ini_was_found=true;
 	fi
 
 	if [ "$PHP_ini_was_found" = true ]; then
-		printf "php.ini path was found => $PHP_ini\n"
-		echo "; PHP security hardening by $(whoami) at $(date)" >>$PHP_ini
-		system_has_disabled_funcs=$(grep -i -E "^disable_functions\s*=\s*" $PHP_ini | awk -F'=' '{ print $2 }' | sed -e 's/^[ \t]*//')
-		if [[ $(echo $system_has_disabled_funcs | wc -c) -gt 1 ]]; then
-			# printf "[!] Found disabled functions: $system_has_disabled_funcs\n"
-			sed -i -e "/^disable_functions/ s/^[#|;]*/;/" $PHP_ini
-			if [ "$system_has_disabled_funcs" != "$funcs_to_disable" ]; then
-				echo "disable_functions=$(echo $funcs_to_disable), $system_has_disabled_funcs" >>$PHP_ini
+		for php_ini_path in $PHP_ini
+		do
+			printf "php.ini path was found => $php_ini_path\n"
+			echo "; PHP security hardening by $(whoami) at $(date)" >>$php_ini_path
+			system_has_disabled_funcs=$(grep -i -E "^disable_functions\s*=\s*" $php_ini_path | awk -F'=' '{ print $2 }' | sed -e 's/^[ \t]*//')
+			if [[ $(echo $system_has_disabled_funcs | wc -c) -gt 1 ]]; then
+				# printf "[!] Found disabled functions: $system_has_disabled_funcs\n"
+				sed -i -e "/^disable_functions/ s/^[#|;]*/;/" $php_ini_path
+				if [ "$system_has_disabled_funcs" != "$funcs_to_disable" ]; then
+					echo "disable_functions=$(echo $funcs_to_disable), $system_has_disabled_funcs" >>$php_ini_path
+				else
+					echo "disable_functions=$(echo $funcs_to_disable)" >>$php_ini_path
+				fi
 			else
-				echo "disable_functions=$(echo $funcs_to_disable)" >>$PHP_ini
+				sed -i -e "/^disable_functions/ s/^[#|;]*/;/" $php_ini_path
+				echo "disable_functions=$(echo $funcs_to_disable)" >>$php_ini_path
 			fi
-		else
-			sed -i -e "/^disable_functions/ s/^[#|;]*/;/" $PHP_ini
-			echo "disable_functions=$(echo $funcs_to_disable)" >>$PHP_ini
-		fi
+		done
 		printf "Successfully disabled: $funcs_to_disable\n"
 		printf "\n--------------------------------------\n";
 		printf "|[x] Please, reload the webserver... |";
@@ -160,7 +163,7 @@ printf "\nDisabling the PHP engine entirely in ${drupal_path}/sites/default/file
 # incase we go shelled, overwrite the .htaccess
 # if [ ! -f ${drupal_path}/sites/default/files/.htaccess ]; then
 # printf ".htaccess files was not found in ${drupal_path}/sites/default/files/.htaccess !\n"
-cat >${drupal_path}/sites/default/files/.htaccess <<EOF
+cat >./*/files/.htaccess <<EOF
 # Turn off all options we don't need.
 Options None
 Options +FollowSymLinks
@@ -179,8 +182,8 @@ php_flag engine off
 EOF
 # fi
 printf "Changing the .htaccess file permission back to "----r-----"...\n"
-chown ${drupal_user}:${httpd_group} ${drupal_path}/sites/default/files/.htaccess
-chmod u=,g=r,o= ${drupal_path}/sites/default/files/.htaccess
+chown ${drupal_user}:${httpd_group} ./*/files/.htaccess
+chmod u=,g=r,o= ./*/files/.htaccess
 echo "Done setting proper permissions on files and directories."
 
 disable_sys_funcs
