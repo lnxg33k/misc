@@ -8,8 +8,8 @@
 
 # Written by Ahmed Shawky @lnxg33k
 
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from urlparse import urlparse, parse_qs
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 from datetime import datetime
 
 
@@ -17,14 +17,14 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         query_components = parse_qs(urlparse(self.path).query)
-        print ""
-        print "%s - %s\t%s" % (
+        print("")
+        print("%s - %s\t%s" % (
             datetime.now().strftime("%Y-%m-%d %I:%M %p"),
             self.client_address[0],
-            self.headers['user-agent'])
-        print "-------------------"*6
-        for k, v in query_components.items():
-            print "%s\t\t\t%s" % (k.strip(), v)
+            self.headers['user-agent']))
+        print("-------------------"*6)
+        for k, v in list(query_components.items()):
+            print("%s\t\t\t%s" % (k.strip(), v))
 
         # print query_components
         # self.send_response(500)
